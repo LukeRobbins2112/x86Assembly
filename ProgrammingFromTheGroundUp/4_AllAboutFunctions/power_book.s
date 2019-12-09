@@ -9,7 +9,7 @@
     .globl _start
 
 _start:
-    pushq $3                # push second arg
+    pushq $0                # push second arg
     pushq $2                # push first arg
     call power              # call power function
 
@@ -35,8 +35,11 @@ _start:
 power:
     pushq %rbp              # save old base pointer
     movq  %rsp, %rbp         # make stack pointer the base pointer
-    subq  $8, %rsp           # get room for local storage
 
+    cmpq $0, 24(%rbp)		# test to see if power is zero
+    je zero_power			# if zero, just return 1
+    	
+    subq  $8, %rsp           # get room for local storage
     movq 16(%rbp), %rbx      # put first atg in %eax
     movq 24(%rbp), %rcx     # put second arv in %ecx
 
@@ -53,6 +56,9 @@ power_loop_start:
     decq %rcx               # decrement the power
     jmp power_loop_start    # next loop iteration
 
+zero_power:
+	movq $1, -8(%rbp)	    # just return 1	
+	
 end_power:
     movq -8(%rbp), %rax     # return value goes in %eax
     movq %rbp, %rsp         # restore the stack pointer
