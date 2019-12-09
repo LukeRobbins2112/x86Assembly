@@ -35,9 +35,6 @@ fac:
 	callq fac		# make next call
 	imulq -8(%rbp), %rax	# add local var to result, prepare to return
 	
-	addq $8, %rsp		# de-allocate space for argument
-	addq $8, %rsp		# de-allocate space for local var
-
 	movq %rbp, %rsp
 	popq %rbp
 	ret			# return sum
