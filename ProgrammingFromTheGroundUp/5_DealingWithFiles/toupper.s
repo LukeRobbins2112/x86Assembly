@@ -8,10 +8,18 @@ output_file:
 	.asciz "output.txt"
 
 # file constants
+	.equ O_RDONLY, 0
 	.equ O_CREAT_WRONLY_TRUNC, 03101
+	.equ FILE_PERMS, 0666
 
-	.equ INPUT_FD, 	-8
-	.equ OUTPUT_FD, -16
+	.equ ARGV2_POS, 24	# output file
+	.equ ARGV1_POS, 16	# input file
+	.equ ARGV0_POS, 8	# program name
+	.equ ARGC_POS,	0	# num args
+
+	.equ STACK_STORAGE, 16	# amount of space for storing FDs 
+	.equ INPUT_FD, 	-8	# local storage for input file FD
+	.equ OUTPUT_FD, -16	# local storage for output file FD
 
 # syscall constants
 	.equ SYS_READ, 	0
@@ -23,26 +31,26 @@ output_file:
 #####################################	
 	.section .bss
 #####################################
-	
-	.lcomm DATA_BUFFER, 512
+	.equ 	BUFFER_SIZE, 512
+	.lcomm 	DATA_BUFFER, BUFFER_SIZE
 
 #####################################	
 	.section .text
 #####################################
-
+	
 	.global _start
 
 _start:
 	movq %rsp, %rbp
-	subq $16, %rsp
+	subq $STACK_STORAGE, %rsp
 
 open_input:	
 	#open file syscall
-	movq $SYS_OPEN,%rax
+	movq $SYS_OPEN, %rax
 	# movq $input_file,%rdi
-	movq 16(%rbp), %rdi
-	movq $0,%rsi
-	movq $0666,%rdx
+	movq ARGV1_POS(%rbp), %rdi
+	movq $O_RDONLY, %rsi
+	movq $FILE_PERMS,%rdx
 	syscall
 
 	# save result
@@ -63,7 +71,7 @@ loop:
 	movq $SYS_READ, %rax	
 	movq INPUT_FD(%rbp), %rdi
 	movq $DATA_BUFFER, %rsi
-	movq $512, %rdx
+	movq $BUFFER_SIZE, %rdx
 	syscall
 
 	#in case of end of file,  close file
