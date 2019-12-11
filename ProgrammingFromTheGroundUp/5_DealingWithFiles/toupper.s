@@ -117,9 +117,49 @@ exit:
 ################################################
 	# To_Upper function
 ################################################
+	#
+	# REGISTERS
+	#	%rdi	First arg - buffer location
+	#	%rsi	Second arg - buffer length
+	#
+	#	%rcx	Byte offset from buffer start - used to get each char
+	#	%rdx 	Holds individual chars - we use low byte register %dl
+	#
+
+	# case constants
+	.equ LOWERCASE_A, 'a'
+	.equ LOWERCASE_Z, 'z'
+	.equ UPPER_CONVERSION, 'A' - 'a'
+
 
 	.type to_uppper, @function
 to_upper:
+	cmpq $0, %rsi		# check buffer length
+	je done_to_upper	# if zero, nothing to do
+
+	movq $0, %rcx		# byte offset from start of DATA_BUFFER
+
+loop_to_upper:
+	movb (%rdi, %rcx, 1), %dl	# get character, store in low byte of register %rdx
+
+	# check character against bounds
+	# if char < 'a' or char > 'z' then skip it
+	cmpb $LOWERCASE_A, %dl
+	jl next_byte
+
+	cmpb $LOWERCASE_Z, %dl
+	jg next_byte
+
+	addb $UPPER_CONVERSION, %dl
+	movb %dl, (%rdi, %rcx, 1)
+
+next_byte:
+	incq %rcx
+	cmpq %rcx, %rsi
+	jne loop_to_upper
+
+
+done_to_upper:
 	rep; ret
 
 	
