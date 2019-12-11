@@ -69,6 +69,7 @@ open_output:
 
 	
 loop:
+read_data:	
 	movq $SYS_READ, %rax	
 	movq INPUT_FD(%rbp), %rdi
 	movq $DATA_BUFFER, %rsi
@@ -79,6 +80,14 @@ loop:
 	cmp $0,%rax
 	je close_files
 
+convert_upper:
+	pushq %rax			# save num bytes read
+	movq $DATA_BUFFER, %rdi		# pass buffer as first arg
+	movq %rax, %rsi			# pass data size as second arg
+	callq to_upper			# convert data to uppercase
+	popq %rax			# restore the buffer size value
+	
+write_data:	
 	# write data to output
 	movq %rax, %rdx			# buffer size to write
 	movq $SYS_WRITE, %rax		# write system call
@@ -102,3 +111,18 @@ exit:
 	mov $SYS_EXIT, %rax	# EXIT
 	mov $0,%rdi	# 0 return code = success
 	syscall
+
+
+
+################################################
+	# To_Upper function
+################################################
+
+	.type to_uppper, @function
+to_upper:
+	rep; ret
+
+	
+
+	
+	
