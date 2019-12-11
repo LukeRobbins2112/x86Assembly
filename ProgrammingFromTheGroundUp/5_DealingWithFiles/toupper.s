@@ -32,7 +32,7 @@ open_input:
 	syscall
 
 	# save result
-	movq %rax, -8(%rbp)
+	movq %rax, INPUT_FD(%rbp)
 
 open_output:
 	mov $2,%rax
@@ -42,12 +42,12 @@ open_output:
 	syscall
 
 	# save result
-	movq %rax, -16(%rbp)
+	movq %rax, OUTPUT_FD(%rbp)
 
 	
 loop:
 	movq $0, %rax	# read
-	movq -8(%rbp), %rdi
+	movq INPUT_FD(%rbp), %rdi
 	movq $INPUT_BUFFER, %rsi
 	movq $512, %rdx
 	syscall
@@ -56,6 +56,13 @@ loop:
 	cmp $0,%rax
 	je .exit
 
+	# write data to output
+	movq %rax, %rdx			# buffer size to write
+	movq $1, %rax			# write system call
+	movq OUTPUT_FD(%rbp), %rdi	# output fd
+	movq $INPUT_BUFFER, %rsi	# buffer towrite
+	syscall
+	
 	jmp loop
 	
 .close_file:
