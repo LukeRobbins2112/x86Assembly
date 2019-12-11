@@ -58,7 +58,8 @@ open_input:
 
 open_output:
 	mov $SYS_OPEN,%rax
-	mov $output_file,%rdi
+	# mov $output_file,%rdi
+	movq ARGV2_POS(%rbp), %rdi
 	mov $O_CREAT_WRONLY_TRUNC,%rsi
 	mov $0666,%rdx
 	syscall
