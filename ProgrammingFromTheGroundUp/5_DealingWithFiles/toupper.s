@@ -18,17 +18,16 @@ output_file:
 	.global _start
 
 _start:
-
-	pushq %rbp
 	movq %rsp, %rbp
 	subq $16, %rsp
 
 open_input:	
 	#open file syscall
-	mov $2,%rax
-	mov $input_file,%rdi
-	mov $0,%rsi
-	mov $0666,%rdx
+	movq $2,%rax
+	# movq $input_file,%rdi
+	movq 16(%rbp), %rdi
+	movq $0,%rsi
+	movq $0666,%rdx
 	syscall
 
 	# save result
@@ -54,7 +53,7 @@ loop:
 
 	#in case of end of file,  close file
 	cmp $0,%rax
-	je .exit
+	je close_files
 
 	# write data to output
 	movq %rax, %rdx			# buffer size to write
@@ -65,14 +64,16 @@ loop:
 	
 	jmp loop
 	
-.close_file:
-	mov $3,%rax			# close system call
-	mov -8(%rbp), %rdi		# get file descriptor - @TODO use common register / address?
+close_files:
+	movq $3,%rax			# close system call
+	movq INPUT_FD(%rbp), %rdi		# get file descriptor - @TODO use common register / address?
 	syscall
 
+	movq $3, %rax
+	movq OUTPUT_FD(%rbp), %rdi
+	syscall
 
-.exit:
-	
+exit:
 	mov $60,%rax	# EXIT
 	mov $0,%rdi	# 0 return code = success
 	syscall
