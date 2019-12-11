@@ -98,6 +98,7 @@ close_files:
 	syscall
 
 exit:
+	movq %rbp, %rsp
 	mov $SYS_EXIT, %rax	# EXIT
 	mov $0,%rdi	# 0 return code = success
 	syscall
