@@ -41,31 +41,39 @@ output_file:
 	.global _start
 
 _start:
-	movq %rsp, %rbp
-	subq $STACK_STORAGE, %rsp
+	movq %rsp, %rbp			# store beginning of stack frame
+	subq $STACK_STORAGE, %rsp	# subtract enough space to hold FD's
 
+# Probbaly not worth creating separate function since you'd need to pass args
 open_input:	
 	#open file syscall
-	movq $SYS_OPEN, %rax
-	# movq $input_file,%rdi
-	movq ARGV1_POS(%rbp), %rdi
-	movq $O_RDONLY, %rsi
-	movq $FILE_PERMS,%rdx
-	syscall
+	movq $SYS_OPEN, %rax		# syscall code - open input file
+	movq $input_file,%rdi		# 0th arg - filename
+	movq ARGC_POS(%rbp), %rdx
+	cmpq $2, ARGC_POS(%rbp)
+	jl no_inputarg
+	movq ARGV1_POS(%rbp), %rdi	# 0th arg - filename
+no_inputarg:	
+	movq $O_RDONLY, %rsi		# 1st arg - access flag
+	movq $FILE_PERMS,%rdx		# 2nd arg - file perms
+	syscall				# open the file
 
 	# save result
-	movq %rax, INPUT_FD(%rbp)
+	movq %rax, INPUT_FD(%rbp)	# save result FD 
 
 open_output:
-	mov $SYS_OPEN,%rax
-	# mov $output_file,%rdi
-	movq ARGV2_POS(%rbp), %rdi
-	mov $O_CREAT_WRONLY_TRUNC,%rsi
-	mov $0666,%rdx
-	syscall
+	mov $SYS_OPEN,%rax		# syscall code - open output file
+	mov $output_file,%rdi		# 0th arg - filename
+	cmpq $3, ARGC_POS(%rbp)
+	jl no_outputarg
+	movq ARGV2_POS(%rbp), %rdi	# 0th arg - filename
+no_outputarg:
+	mov $O_CREAT_WRONLY_TRUNC,%rsi 	# 1st arg - access flags
+	mov $0666,%rdx			# 2nd arg - file perms
+	syscall				# open the file
 
 	# save result
-	movq %rax, OUTPUT_FD(%rbp)
+	movq %rax, OUTPUT_FD(%rbp)	# save second result FD
 
 	
 loop:
