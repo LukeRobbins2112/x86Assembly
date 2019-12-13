@@ -65,11 +65,11 @@ record2:
 	.endr
 	# address
 	.ascii "500 S Johannan St\nChicago, IL 12345\0"
-	.rept 206
+	.rept 204
 	.byte 0
 	.endr
 	# age
-	.long 36
+	.long 56
 
 # output file
 file_name:
