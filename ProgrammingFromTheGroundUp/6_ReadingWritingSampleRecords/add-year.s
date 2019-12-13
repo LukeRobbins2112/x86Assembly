@@ -71,8 +71,8 @@ update_loop:
 	incq MODIFY_BUFFER + RECORD_AGE
 
 	# write to output file
-	pushq OUTPUT_FD(%rbp)
 	pushq $MODIFY_BUFFER
+	pushq OUTPUT_FD(%rbp)
 	callq write_record
 	addq $16, %rsp		# clear args from stack
 

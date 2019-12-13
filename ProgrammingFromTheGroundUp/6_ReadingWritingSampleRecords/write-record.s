@@ -6,8 +6,8 @@
 
 	.section .text
 
-	.equ WRITE_BUF, 16
-	.equ OUTPUT_FD, 24
+	.equ OUTPUT_FD, 16
+	.equ WRITE_BUF, 24
 
 	.globl write_record
 	.type write_record @function
