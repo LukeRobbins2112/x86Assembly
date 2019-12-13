@@ -103,22 +103,19 @@ _start:
 	movq %rax, ST_FILE_DESC(%rbp)
 
 	# write first record
-	pushq $record0			# immediate address of record0
-	pushq ST_FILE_DESC(%rbp)	# output fd to write to
+	movq ST_FILE_DESC(%rbp), %rdi
+	movq $record0, %rsi
 	callq write_record		# call function
-	addq $16, %rsp			# restore stack pointer
 
 	# write second record	
-	pushq $record1			# immediate address of record0
-	pushq ST_FILE_DESC(%rbp)	# output fd to write to
+	movq ST_FILE_DESC(%rbp), %rdi
+	movq $record1, %rsi
 	callq write_record		# call function
-	addq $16, %rsp			# restore stack pointer
 
 	# write third record
-	pushq $record2			# immediate address of record0
-	pushq ST_FILE_DESC(%rbp)	# output fd to write to
+	movq ST_FILE_DESC(%rbp), %rdi
+	movq $record2, %rsi
 	callq write_record		# call function
-	addq $16, %rsp			# restore stack pointer
 
 	# close the file
 	movq $SYS_CLOSE, %rax

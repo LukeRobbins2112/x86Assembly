@@ -6,9 +6,6 @@
 
 	.section .text
 
-	.equ OUTPUT_FD, 16
-	.equ WRITE_BUF, 24
-
 	.globl write_record
 	.type write_record @function
 
@@ -20,8 +17,6 @@ write_record:
 
 	# write record from buffer
 	movq $SYS_WRITE, %rax
-	movq OUTPUT_FD(%rbp), %rdi
-	movq WRITE_BUF(%rbp), %rsi
 	movq $RECORD_SIZE, %rdx
 	syscall
 

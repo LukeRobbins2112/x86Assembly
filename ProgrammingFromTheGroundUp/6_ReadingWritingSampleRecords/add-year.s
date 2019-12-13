@@ -70,10 +70,10 @@ update_loop:
 	incq MODIFY_BUFFER + RECORD_AGE
 
 	# write to output file
-	pushq $MODIFY_BUFFER
-	pushq OUTPUT_FD(%rbp)
+	movq OUTPUT_FD(%rbp), %rdi
+	movq $MODIFY_BUFFER, %rsi
 	callq write_record
-	addq $16, %rsp		# clear args from stack
+
 
 	jmp update_loop
 
