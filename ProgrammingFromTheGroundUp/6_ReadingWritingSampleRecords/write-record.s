@@ -11,16 +11,12 @@
 
 write_record:
 
-	# save stack pointer
-	pushq %rbp
-	movq %rsp, %rbp
-
 	# write record from buffer
+	# %rdi already has FD
+	# %rsi already has buffer address
 	movq $SYS_WRITE, %rax
 	movq $RECORD_SIZE, %rdx
 	syscall
 
 	# done writing - return number of bytes read as result
-	movq %rbp, %rsp
-	popq %rbp
 	retq

@@ -15,16 +15,12 @@
 	# Arg 1 (%rsi): Read buffer
 read_record:
 
-	# save stack pointer
-	pushq %rbp
-	movq %rsp, %rbp
-
 	# read record into buffer
+	# %rdi is already set to FD
+	# %rsi is already set to buffer address
 	movq $SYS_READ, %rax
 	movq $RECORD_SIZE, %rdx
 	syscall
 
 	# done reading - return number of bytes read as result
-	movq %rbp, %rsp
-	popq %rbp
 	retq
