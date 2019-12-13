@@ -2,3 +2,9 @@
 *~
 *.o
 *.dat
+toupper
+toupper_stdinout
+add-year
+find-oldest
+read-records
+write-records
