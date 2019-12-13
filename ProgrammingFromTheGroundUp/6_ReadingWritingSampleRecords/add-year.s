@@ -58,10 +58,9 @@ open_output_file:
 
 update_loop:
 	# read record into buffer
-	pushq $MODIFY_BUFFER	# 1st arg
-	pushq INPUT_FD(%rbp)	# 0th arg
+	movq INPUT_FD(%rbp), %rdi
+	movq $MODIFY_BUFFER, %rsi
 	callq read_record
-	addq $16, %rsp		# clear args from stack
 
 	# if we didn't read a whole record, exit
 	cmpq $RECORD_SIZE, %rax

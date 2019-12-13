@@ -47,8 +47,10 @@ _start:
 record_read_loop:
 
 	# read a record into the buffer
-	pushq $RECORD_BUFFER	# arg 1
-	pushq INPUT_FD(%rbp)	# arg 0
+#	pushq $RECORD_BUFFER	# arg 1
+#	pushq INPUT_FD(%rbp)	# arg 0
+	movq INPUT_FD(%rbp), %rdi
+	movq $RECORD_BUFFER, %rsi
 	callq read_record
 
 	# make sure we read the proper record size
@@ -57,7 +59,7 @@ record_read_loop:
 	jne end_loop
 
 	# otherwise, continue
-	addq $16, %rsp		# remove args from stack
+#	addq $16, %rsp		# remove args from stack
 
 	# get age of record
 	movq RECORD_AGE + RECORD_BUFFER, %rdi
