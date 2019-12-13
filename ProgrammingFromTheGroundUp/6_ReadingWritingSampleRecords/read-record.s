@@ -12,6 +12,10 @@
 	.globl read_record
 	.type read_record @function
 
+	#
+	# ARGS
+	# Arg 0 (%rdi): Input FD 
+	# Arg 1 (%rsi): Read buffer
 read_record:
 
 	# save stack pointer
@@ -20,8 +24,8 @@ read_record:
 
 	# read record into buffer
 	movq $SYS_READ, %rax
-	movq INPUT_FD(%rbp), %rdi
-	movq READ_BUF(%rbp), %rsi
+#	movq INPUT_FD(%rbp), %rdi
+#	movq READ_BUF(%rbp), %rsi
 	movq $RECORD_SIZE, %rdx
 	syscall
 
