@@ -1,6 +1,7 @@
 
 	.include "linux.s"
 	.include "record-def.s"
+	.include "error_codes.s"
 
 
 ##################################
@@ -42,6 +43,10 @@ open_input_file:
 	movq $0666, %rdx
 	syscall
 
+	# check return code for error
+	cmpq $0, %rax
+	jl handle_error
+
 	# save input fd
 	movq %rax, INPUT_FD(%rbp)
 
@@ -53,6 +58,9 @@ open_output_file:
 	movq $0666, %rdx
 	syscall
 
+	cmpq $0, %rax
+	jl handle_error
+
 	# save output fd
 	movq %rax, OUTPUT_FD(%rbp)
 
@@ -62,9 +70,13 @@ update_loop:
 	movq $MODIFY_BUFFER, %rsi
 	callq read_record
 
-	# if we didn't read a whole record, exit
-	cmpq $RECORD_SIZE, %rax
+	# if EOF, we're done
+	cmpq $EOF, %rax
 	jne end_update
+
+	# if otherwise not equal to record size, error
+	cmpq $RECORD_SIZE, %rax
+	jne handle_error
 
 	# update age directly in memory
 	incq MODIFY_BUFFER + RECORD_AGE
@@ -73,6 +85,10 @@ update_loop:
 	movq OUTPUT_FD(%rbp), %rdi
 	movq $MODIFY_BUFFER, %rsi
 	callq write_record
+
+	# make sure we wrote it all
+	cmpq $RECORD_SIZE, %rax
+	jne handle_error
 
 
 	jmp update_loop
@@ -97,3 +113,9 @@ exit_program:
 	movq $SYS_EXIT, %rax
 	movq $0, %rdi
 	syscall
+
+
+handle_error:
+	movq $read_err_code, %rdi
+	movq $read_err_msg, %rsi
+	callq error_exit
