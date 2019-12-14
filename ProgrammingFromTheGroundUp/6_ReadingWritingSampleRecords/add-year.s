@@ -45,6 +45,8 @@ open_input_file:
 
 	# check return code for error
 	cmpq $0, %rax
+	movq $open_err_code, %rdi
+	movq $open_err_msg, %rsi
 	jl handle_error
 
 	# save input fd
@@ -59,6 +61,8 @@ open_output_file:
 	syscall
 
 	cmpq $0, %rax
+	movq $open_err_code, %rdi
+	movq $open_err_msg, %rsi
 	jl handle_error
 
 	# save output fd
@@ -72,10 +76,12 @@ update_loop:
 
 	# if EOF, we're done
 	cmpq $EOF, %rax
-	jne end_update
+	je end_update
 
 	# if otherwise not equal to record size, error
 	cmpq $RECORD_SIZE, %rax
+	movq $read_err_code, %rdi
+	movq $read_err_msg, %rsi
 	jne handle_error
 
 	# update age directly in memory
@@ -88,6 +94,8 @@ update_loop:
 
 	# make sure we wrote it all
 	cmpq $RECORD_SIZE, %rax
+	movq $write_err_code, %rdi
+	movq $write_err_msg, %rsi
 	jne handle_error
 
 
@@ -116,6 +124,4 @@ exit_program:
 
 
 handle_error:
-	movq $read_err_code, %rdi
-	movq $read_err_msg, %rsi
 	callq error_exit
