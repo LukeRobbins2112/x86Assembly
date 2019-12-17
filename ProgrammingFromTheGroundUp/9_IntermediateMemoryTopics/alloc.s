@@ -28,9 +28,9 @@
 	#
 
 heap_begin:
-	.long 0
+	.quad 0
 current_break:
-	.long 0
+	.quad 0
 	
 ####################################
 .section .text
