@@ -12,8 +12,6 @@ newline:
 .section .text
 ##########################################
 
-	.equ FILE_DESC, 16
-	
 	.globl write_newline
 	.type write_newline @function
 write_newline:
@@ -22,7 +20,6 @@ write_newline:
 	movq %rsp, %rbp
 
 	movq $SYS_WRITE, %rax
-	movq FILE_DESC(%rbp), %rdi
 	movq $newline, %rsi
 	movq $1, %rdx
 	syscall
