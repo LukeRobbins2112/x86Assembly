@@ -9,11 +9,8 @@
 filename:
 	.ascii "test.dat\0"
 
-	##########################################
-	.section .bss
-	##########################################
-
-	.lcomm RECORD_BUFFER, RECORD_SIZE
+record_buffer_ptr:
+	.quad 0
 
 	##########################################
 	.section .text
@@ -28,6 +25,15 @@ filename:
 _start:
 	movq %rsp, %rbp
 
+	# set up heap
+	callq alloc_init
+
+	# grab memory for record buffer
+	movq $RECORD_SIZE, %rdi
+	callq allocate
+	movq %rax, record_buffer_ptr
+
+	# allocate stack space
 	subq $STACK_SIZE, %rsp
 
 	# open the records file for reading
@@ -44,7 +50,7 @@ record_read_loop:
 
 	# read a record into the buffer
 	movq INPUT_FD(%rbp), %rdi
-	movq $RECORD_BUFFER, %rsi
+	movq record_buffer_ptr, %rsi
 	callq read_record
 
 	# make sure we read the proper record size
@@ -54,7 +60,9 @@ record_read_loop:
 
 	# otherwise, continue
 	# handle first name: count chars then print
-	pushq $RECORD_FIRSTNAME + RECORD_BUFFER	# push firstname location
+	movq record_buffer_ptr, %rax
+	addq $RECORD_FIRSTNAME, %rax
+	pushq %rax				# push firstname location
 	callq count_chars			# count the chars
 	addq $8, %rsp				# restore stack
 
@@ -62,18 +70,22 @@ record_read_loop:
 	movq %rax, %rdx		# num chars
 	movq $SYS_WRITE, %rax
 	movq OUTPUT_FD(%rbp), %rdi
-	movq $RECORD_FIRSTNAME + RECORD_BUFFER, %rsi
+	movq record_buffer_ptr, %rsi
+	addq $RECORD_FIRSTNAME, %rsi
 	syscall
 
 	# add new line
-	pushq OUTPUT_FD(%rbp)
+	movq OUTPUT_FD(%rbp), %rdi
 	callq write_newline
-	addq $8, %rsp			#restore stack pointer
 
 	# continue loop
 	jmp record_read_loop
 
 end_loop:
+	# deallocate record buffer
+	movq record_buffer_ptr, %rdi
+	callq deallocate
+	
 	movq $SYS_EXIT, %rax
 	movq $0, %rdi
 	syscall
