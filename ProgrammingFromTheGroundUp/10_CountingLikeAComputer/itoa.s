@@ -23,16 +23,18 @@ itoa:
 	# division uses %rax as dividend
 	movq %rdi, %rax
 
+	# use rcx to divide result by 10
+	movq $10, %rcx
+
 	# count the number of digits
-	movq $0, %rcx
+	movq $0, %rdi
 
 convert_digit_loop:
 
 	# Divide remaining number by 10
 	# Result in %rax, remainder in %rdx
 	movq $0, %rdx
-	movq $10, %rbx
-	divq %rbx
+	divq %rcx
 
 	# convert remainder to char
 	addq $'0', %rdx
@@ -42,7 +44,7 @@ convert_digit_loop:
 	pushq %rdx
 
 	# increment number of digits
-	incq %rcx
+	incq %rdi
 	
 	# now check if there are remaining digits
 	cmpq $0, %rax
@@ -55,7 +57,7 @@ done_converting:
 	movq %rsi, %r8
 
 	# save number of digits
-	movq %rcx, %r9
+	movq %rdi, %r9
 
 build_string_loop:
 	# pop each character 
@@ -68,8 +70,8 @@ build_string_loop:
 	incq %r8
 
 	# check to see if we're done
-	decq %rcx
-	cmpq $0, %rcx
+	decq %rdi
+	cmpq $0, %rdi
 	jne build_string_loop
 
 	
