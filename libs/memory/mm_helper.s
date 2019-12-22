@@ -79,4 +79,27 @@ GET:
 PUT:
 	movq %rsi, (%rdi)
 	ret
+
+	# @FUNCTION
+	#
+	# PURPOSE
+	# Get the size of a block by examining the size
+	# value of the header, ignoring the ALLOC bit
+	#
+	# ARGUMENTS
+	# Arg0 (%rdi): Pointer to the block header
+	#
+	# RETURN
+	# No return
+
+	.type GET_SIZE @function
+GET_SIZE:
+	# ptr is already in %rdi, just call GET
+	callq GET
+
+	# take result and AND with ~0x7 to clear low 3 bits
+	andq $~0x7, %rax
+
+	# result is in %rax already, just return
+	ret
 	

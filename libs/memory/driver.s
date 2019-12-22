@@ -35,6 +35,10 @@ _start:
 	movq $321, %rsi
 	callq PUT
 
+	# test GET_SIZE
+	movq $INT_PTR, %rdi
+	callq GET_SIZE
+
 	movq $0, %rdi
 	movq $60, %rax
 	syscall
