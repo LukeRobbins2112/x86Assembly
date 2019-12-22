@@ -1,16 +1,13 @@
 
 
 #############################
-.section .rodata	# constants
+.section .data	# constants
 #############################
 
 
-WSIZE:
-	.long 4
-DSIZE:
-	.long 8
-CHUNKSIZE:
-	.long (1 << 12)	# 4096 bytes
+.equ WSIZE, 4
+.equ DSIZE, 8
+.equ CHUNKSIZE, (1 << 12)	# 4096 bytes
 
 #########################	
 .section .text
@@ -125,4 +122,60 @@ GET_ALLOC:
 	andq $0x1, %rax
 
 	# result is in %rax already, just return
+	ret
+
+
+	# @FUNCTION
+	#
+	# PURPOSE
+	# Given a block pointer, retrieve a pointer to its header
+	#
+	# ARGUMENTS
+	# ARG0 (%rsi): BLock pointer
+	#
+	# RETURN
+	# Return pointer to the block header
+	#
+
+	.type HDRP @function
+HDRP:
+	movq %rdi, %rax
+	subq $WSIZE, %rax
+	ret
+
+	# @FUNCTION
+	#
+	# PURPOSE
+	# Given a block pointer, retrieve a pointer to its footer
+	#
+	# ARGUMENTS
+	# ARG0 (%rsi): BLock pointer
+	#
+	# RETURN
+	# Return pointer to the block footer
+	#
+
+	.type FTRP @function
+FTRP:
+	# save original block pointer
+	pushq %rdi
+	
+	# get header (bp is already in %rdi)
+	callq HDRP
+	
+	# pointer to header is in %rax
+	# use that to get size
+	movq %rax, %rdi
+	callq GET_SIZE
+
+	# retrieve block pointer
+	popq %rdi
+
+	# add block size, to get pointer to next block
+	addq %rdi, %rax 
+
+	# subtract DSIZE to get footer pointer
+	subq $DSIZE, %rax
+
+	# return footer pointer
 	ret
