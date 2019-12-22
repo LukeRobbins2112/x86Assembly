@@ -59,3 +59,24 @@ PACK:
 GET:
 	movq (%rdi), %rax
 	ret
+
+	#
+	# @FUNCTION PUT
+	#
+	# PURPOSE
+	# Set the given address to the desired value
+	#
+	# ARGUMENTS
+	# Arg0 (%rdi): Address to set
+	# Arg1 (%rsi): Value to put at address
+	#
+	# RETURN
+	# No return value
+	# @TODO might be nice to get original value at that addr?
+	#
+
+	.type PUT @function
+PUT:
+	movq %rsi, (%rdi)
+	ret
+	
