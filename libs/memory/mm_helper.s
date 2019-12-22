@@ -41,3 +41,21 @@ PACK:
 	movq %rdi, %rax
 	orq $1, %rax
 	ret
+
+	#
+	# @FUNCTION GET
+	#
+	# PURPOSE
+	# Get integer value at the given address
+	#
+	# ARGUMENTS
+	# ARG0 (%rdi): the pointer to dereference
+	#
+	# RETURN
+	# The value at that address
+	#
+
+	.type GET @function
+GET:
+	movq (%rdi), %rax
+	ret
