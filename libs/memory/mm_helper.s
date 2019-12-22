@@ -179,3 +179,40 @@ FTRP:
 
 	# return footer pointer
 	ret
+
+	# @FUNCTION
+	#
+	# PURPOSE
+	# Get pointer to the beginning of next block pointer
+	#
+	# ARGUMENTS
+	# ARG0 (%rdi): Current block pointer
+	#
+	# RETURN
+	# Next block pointer
+	#
+
+	.type NEXT_BLKP @function
+NEXT_BLKP:
+	# save bp
+	pushq %rdi
+	
+	# get current block header (bp is already in %rdi)
+	callq HDRP
+
+	# get size of current block, using header
+	movq %rax, %rdi
+	callq GET_SIZE
+
+	# retrieve bp
+	popq %rdi
+
+	# combine pointer and size to get next
+	# (bp + size) = (next_bp + 4 extra bytes for footer)
+	# then subtract those 4 extra bytes to get start of next_bp
+	addq %rdi, %rax
+	subq $WSIZE, %rax
+
+	# return next block pointer
+	ret
+	

@@ -14,9 +14,17 @@ INT_VAL:
 .section .bss
 #############################			
 
-	# sample block
+	# *** These sample blocks are contiguous in memory ***
+	
+	# sample previous block
+	.lcomm PREV_BLOCK, 16
+	
+	# "current" sample block
 	# 4-byte header, 4-byte footer, 8 bytes memory
 	.lcomm TEST_BLOCK, 16
+
+	# next sample block
+	.lcomm NEXT_BLOCK, 16
 	
 #############################	
 .section .text
@@ -50,15 +58,33 @@ _start:
 	movq $INT_PTR, %rdi
 	callq GET_ALLOC
 
-	# set up test block
+	# setup test block
 	movq $TEST_BLOCK, %rdi
 	movq $16, %rsi
-	callq PUT
+	movq $1, %rdx
+	callq setup_block
 
-	movq $TEST_BLOCK, %rdi
-	addq $12, %rdi
+	# setup prev block
+	movq $PREV_BLOCK, %rdi
 	movq $16, %rsi
-	callq PUT
+	movq $1, %rdx
+	callq setup_block
+
+	# setup next_block
+	movq $NEXT_BLOCK, %rdi
+	movq $16, %rsi
+	movq $1, %rdx
+	callq setup_block
+	
+	# set up test block
+	#movq $TEST_BLOCK, %rdi
+	#movq $16, %rsi
+	#callq PUT
+
+	#movq $TEST_BLOCK, %rdi
+	#addq $12, %rdi
+	#movq $16, %rsi
+	#callq PUT
 	
 	# test HDRP
 	movq $TEST_BLOCK, %rdi
@@ -70,6 +96,79 @@ _start:
 	addq $4, %rdi
 	callq FTRP
 
+	# test NEXT_BLKP
+	movq $TEST_BLOCK, %rdi
+	addq $4, %rdi
+	callq NEXT_BLKP
+
 	movq $0, %rdi
 	movq $60, %rax
 	syscall
+
+
+	# @FUNCTION
+	#
+	# PURPOSE
+	# Helper function to set up test blocks
+	#
+	# ARGUMENTS
+	# Arg0 (%rdi): Block poiner
+	# Arg1 (%rsi): Size of the block
+	# Arg2 (%rdx): WHether the block is allocated (0 or 1)
+	#
+	# RETURN
+	# No return value
+	#
+
+	.equ blk_size, -8
+	.equ blk_ptr, -16
+	.equ packed_val, -24
+	
+	.type setup_block @function
+setup_block:
+
+	# prepare stack
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $24, %rsp
+	
+	# save size, block ptr for later reference
+	movq %rdi, blk_ptr(%rbp)
+	movq %rsi, blk_size(%rbp)
+	
+	# pack size | alocated
+	# then save that value on the stack
+	movq blk_size(%rbp), %rdi
+	movq %rdx, %rsi
+	callq PACK
+	movq %rax, packed_val(%rbp)
+	
+	# put PACK'ed value in header
+	movq blk_ptr(%rbp), %rdi
+	movq %rax, %rsi
+	callq PUT
+
+	# Get footer
+	movq blk_ptr(%rbp), %rdi
+	addq $WSIZE, %rdi
+	callq FTRP
+
+	# Set footer
+	movq %rax, %rdi
+	movq packed_val(%rbp), %rsi
+	callq PUT
+
+	# return block pointer
+	movq blk_ptr(%rbp), %rax
+	addq $WSIZE, %rax
+
+	# restrore stack
+	movq %rbp, %rsp
+	popq %rbp
+	ret
+
+	
+
+	
+
+	
