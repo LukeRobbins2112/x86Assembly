@@ -39,6 +39,10 @@ _start:
 	movq $INT_PTR, %rdi
 	callq GET_SIZE
 
+	# test GET_ALLOC
+	movq $INT_PTR, %rdi
+	callq GET_ALLOC
+
 	movq $0, %rdi
 	movq $60, %rax
 	syscall

@@ -90,7 +90,7 @@ PUT:
 	# Arg0 (%rdi): Pointer to the block header
 	#
 	# RETURN
-	# No return
+	# Returns block size
 
 	.type GET_SIZE @function
 GET_SIZE:
@@ -102,4 +102,27 @@ GET_SIZE:
 
 	# result is in %rax already, just return
 	ret
+
 	
+	# @FUNCTION
+	#
+	# PURPOSE
+	# Check bit to determine if block is allocated
+	#
+	# ARGUMENT
+	# Pointer to block header
+	#
+	# Return value
+	# Returns result of low bit check
+	#
+
+	.type GET_ALLOC @function
+GET_ALLOC:	
+	# ptr is already in %rdi, just call GET
+	callq GET
+
+	# take result and AND with 0x1 to check if allocated
+	andq $0x1, %rax
+
+	# result is in %rax already, just return
+	ret
