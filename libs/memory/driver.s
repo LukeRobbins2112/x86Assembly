@@ -1,5 +1,6 @@
 
-	.include "mm_helper.s"
+#	.include "mm_helper.s"
+	.include "mm.s"
 	
 #############################	
 .section .data
@@ -90,6 +91,10 @@ _start:
 	movq $TEST_BLOCK, %rdi
 	addq $4, %rdi
 	callq NEXT_BLKP
+
+	# get program break
+	callq mm_init
+
 
 	movq $0, %rdi
 	movq $60, %rax
