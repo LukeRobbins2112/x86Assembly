@@ -61,30 +61,20 @@ _start:
 	# setup test block
 	movq $TEST_BLOCK, %rdi
 	movq $16, %rsi
-	movq $1, %rdx
+	movq $0, %rdx
 	callq setup_block
 
 	# setup prev block
 	movq $PREV_BLOCK, %rdi
 	movq $16, %rsi
-	movq $1, %rdx
+	movq $0, %rdx
 	callq setup_block
 
 	# setup next_block
 	movq $NEXT_BLOCK, %rdi
 	movq $16, %rsi
-	movq $1, %rdx
+	movq $0, %rdx
 	callq setup_block
-	
-	# set up test block
-	#movq $TEST_BLOCK, %rdi
-	#movq $16, %rsi
-	#callq PUT
-
-	#movq $TEST_BLOCK, %rdi
-	#addq $12, %rdi
-	#movq $16, %rsi
-	#callq PUT
 	
 	# test HDRP
 	movq $TEST_BLOCK, %rdi

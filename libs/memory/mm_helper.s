@@ -29,14 +29,22 @@ MAX_SECOND:
 	
 
 
-	#
 	# @FUNCTION PACK
 	#
+	# PURPOSE
+	# Combine size and allocation bit into a single word
+	#
+	# ARGUMENTS
+	# Arg0 (%rdi): block size
+	# Arg1 (%rsi): alloc bit
+	#
+	# RETURN
+	# Packed combination of size and alloc bit
 
 	.type PACK @function
 PACK:
-	movq %rdi, %rax
-	orq $1, %rax
+	movl %edi, %eax
+	orl %esi, %eax
 	ret
 
 	#
