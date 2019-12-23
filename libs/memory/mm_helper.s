@@ -74,7 +74,7 @@ GET:
 
 	.type PUT @function
 PUT:
-	movq %rsi, (%rdi)
+	movl %esi, (%rdi)
 	ret
 
 	# @FUNCTION
