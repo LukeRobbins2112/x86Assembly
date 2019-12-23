@@ -95,6 +95,10 @@ _start:
 	# get program break
 	callq mm_init
 
+	# test mem_sbrk
+	movq $256, %rdi
+	callq mem_sbrk
+
 
 	movq $0, %rdi
 	movq $60, %rax
