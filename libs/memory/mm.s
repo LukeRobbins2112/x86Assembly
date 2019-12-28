@@ -8,6 +8,12 @@
 
 	.equ MAX_MEM_REQUEST, (1 << 12)
 
+# heap pointers
+mem_heap:
+	.quad 0
+mem_brk:
+	.quad 0
+	
 # heap_list pointer	
 heap_listp:
 	.quad 0
@@ -30,10 +36,13 @@ heap_listp:
 	.type mm_init @function
 mm_init:
 	# Get initial program break, save it in heap_listp
+	# also save it in mem_heap and mem_brk for reference throughout prog
 	movq $SYS_BRK, %rax
 	movq $0, %rdi
 	syscall
 	movq %rax, heap_listp
+	movq %rax, mem_heap
+	movq %rax, mem_brk
 	
 
 	# Request memory for initial setup
@@ -116,7 +125,6 @@ mm_init_err:
 	#
 	# NOTES
 	# (1) Call to brk may round up our request,
-	# 	so caller should check the actual pointer returned
 	# (2) We assume requested amount is aligned (done elsewhere)
 	#
 
@@ -128,6 +136,9 @@ mem_sbrk:
 	cmpq $MAX_MEM_REQUEST, %rdi
 	jge sbrk_err
 
+	# save old program break
+	pushq mem_brk
+	
 	# save argument
 	pushq %rdi
 	
@@ -151,7 +162,11 @@ mem_sbrk:
 	cmpq %rdi, %rax
 	jl sbrk_err
 
-	# return the new program break
+	# if successful, save new program break in global var
+	movq %rax, mem_brk
+
+	# return the **OLD** program break
+	popq %rax
 	retq
 	
 	
@@ -174,6 +189,7 @@ sbrk_err:
 	# STACK SPACE
 	# (RSP - 4): request size in bytes
 	# (RSP - 8): packed size/allocation
+	# (RSP - 16): block pointer from mem_sbrk (** 8 bytes! **)
 	# 
 	#
 	# RETURN
@@ -186,7 +202,7 @@ extend_heap:
 	# stack setup
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $12, %rsp
+	subq $16, %rsp
 
 	# get number of words, check if even or odd
 	movq %rdi, %rsi
@@ -210,7 +226,7 @@ even_words:
 	je extend_heap_err
 
 	# save the block pointer
-	movl %eax, -8(%rbp)
+	movq %rax, -16(%rbp)
 
 initialize_headerfooter:	
 
@@ -218,27 +234,29 @@ initialize_headerfooter:
 	movl -4(%rbp), %edi
 	movq $FREE, %rsi
 	callq PACK
-	movl %eax, -12(%rbp)	# save packed value
+	movl %eax, -8(%rbp)	# save packed value
 
 	# get the block header, put value there
-	movl -8(%rbp), %edi
+	# remember, the returned block pointer is the old
+	# program break, so HDRP returns address of old epilogue
+	movq -16(%rbp), %rdi
 	callq HDRP
 
 	movq %rax, %rdi
-	movl -12(%rbp), %esi
+	movl -8(%rbp), %esi
 	callq PUT
 
 	# get the block footer, put value there
-	movl -8(%rbp), %edi
+	movq -16(%rbp), %rdi
 	callq FTRP
 
 	movq %rax, %rdi
-	movl -12(%rbp), %esi
+	movl -8(%rbp), %esi
 	callq PUT
 
 set_new_epilogue:
 	# get header of "next" block
-	movl -8(%rbp), %edi
+	movq -16(%rbp), %rdi
 	callq NEXT_BLKP
 
 	movq %rax, %rdi
@@ -250,16 +268,18 @@ set_new_epilogue:
 	callq PACK
 
 	# put the value
-	popq %rsi
+	popq %rdi
 	movq %rax, %rsi
 	callq PUT
 	
 coalesce_new_block:	
 	# coalesce
-	movl -8(%rbp), %edi
+	movq -16(%rbp), %rdi
 	callq coalesce
 
-	# result is in %rax, just return
+	# result is in %rax, just reset stack and return
+	movq %rbp, %rsp
+	popq %rbp
 	retq
 
 extend_heap_err:
