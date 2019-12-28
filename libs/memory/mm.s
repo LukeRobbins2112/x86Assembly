@@ -87,6 +87,14 @@ mm_init:
 	movq %rax, %rsi
 	callq PUT
 
+	# set heap_listp to first "free" position
+	# this is the start of the block of the prologue,
+	# which is actually empty
+	addq $WSIZE, heap_listp
+	addq $WSIZE, heap_listp
+
+	# return success
+	movq $0, %rax
 	retq
 
 mm_init_err:
@@ -153,4 +161,58 @@ sbrk_err:
 	retq
 	
 
-# @FUNCTION mm
+	# @FUNCTION extend_heap
+	#
+	# PURPOSE
+	# Provide a wrapper for mem_sbrk
+	# Allocate space for a given number of words
+	# Perform associated setup and coalescing
+	#
+	# ARGUMENTS
+	# Arg0 (%rdi): Num words requested
+	#
+	# RETURN
+	# Returns pointer to newly allocated free block
+	#
+
+	.type extend_heap @function
+extend_heap:
+
+	# get number of words, check if even or odd
+	movq %rdi, %rsi
+	andq $0x1, %rsi
+	cmpq $0x0, %rsi
+	je even_words
+
+	# if result is not zero, words is odd and we must fix that
+	addq $1, %rdi
+	
+even_words:
+	# convert words to bytes
+	imulq $WSIZE, %rdi
+	pushq %rdi		# save the size
+
+	# num bytes are already in arg0, call mem_sbrk for memory
+	callq mem_sbrk
+
+	# check result
+	cmpq $-1, %rax
+	je extend_heap_err
+
+	#
+	# initialize free block header/footer
+	#
+
+	# get packed size/allocation
+	popq %rdi
+	movq $FREE, %rsi
+	callq PACK
+	pushq %rax
+
+	
+	
+
+extend_heap_err:
+	movq $0, %rax
+	retq
+	
