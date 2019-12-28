@@ -8,6 +8,10 @@
 
 	.equ MAX_MEM_REQUEST, (1 << 12)
 
+# heap_list pointer	
+heap_listp:
+	.quad 0
+
 #############################	
 .section .text
 #############################		
@@ -25,12 +29,69 @@
 
 	.type mm_init @function
 mm_init:
-	# Get initial program break
-	movq $0, %rdi
+	# Get initial program break, save it in heap_listp
 	movq $SYS_BRK, %rax
+	movq $0, %rdi
 	syscall
+	movq %rax, heap_listp
+	
 
-	ret
+	# Request memory for initial setup
+	movq $WSIZE, %rdi
+	imulq $4, %rdi		# (WSIZE * 4)
+	callq mem_sbrk
+
+	# check result
+	cmpq $-1, %rax
+	je mm_init_err
+
+	# set up first word as alignment padding
+	movq heap_listp, %rdi
+	movq $WSIZE, %rsi
+	callq PUT
+
+	# compute packed value for prologue header/footer
+	movq $DSIZE, %rdi
+	movq $ALLOCATED, %rsi
+	callq PACK
+
+	# put value in prologue header
+	pushq %rax			# save for second call
+	movq heap_listp, %rdi
+	addq $WSIZE, %rdi
+	movq %rax, %rsi
+	callq PUT
+
+	# put value in prologue footer
+
+	# heap_listp + (2*WSIZE)
+	movq $WSIZE, %rdi
+	imulq $2, %rdi
+	addq heap_listp, %rdi
+
+	# pop saved PACK'ed value
+	popq %rsi
+	callq PUT
+
+	# now set up epilogue
+
+	# get packed value
+	movq $0, %rdi
+	movq $ALLOCATED, %rsi
+	callq PACK
+
+	# now set it in position
+	movq $WSIZE, %rdi
+	imulq $3, %rdi
+	addq heap_listp, %rdi
+	movq %rax, %rsi
+	callq PUT
+
+	retq
+
+mm_init_err:
+	movq $-1, %rax
+	retq
 
 	# @FUNCTION mem_sbrk()
 	#
@@ -91,3 +152,5 @@ sbrk_err:
 	movq $-1, %rax
 	retq
 	
+
+# @FUNCTION mm
