@@ -33,6 +33,26 @@ INT_VAL:
 
 	.globl _start
 _start:
+	# jmp basic_tests
+
+	# initialize heap
+	callq mm_init
+
+	# test extend_heap
+	movq $7, %rdi
+	callq extend_heap
+
+	# test mem_sbrk
+	movq $256, %rdi
+	callq mem_sbrk
+
+
+	movq $0, %rdi
+	movq $60, %rax
+	syscall
+
+
+basic_tests:	
 	# test MAX
 	movq $3, %rdi
 	movq $2, %rsi
@@ -92,18 +112,7 @@ _start:
 	addq $4, %rdi
 	callq NEXT_BLKP
 
-	# get program break
-	callq mm_init
-
-	# test mem_sbrk
-	movq $256, %rdi
-	callq mem_sbrk
-
-
-	movq $0, %rdi
-	movq $60, %rax
-	syscall
-
+	
 
 	# @FUNCTION
 	#
