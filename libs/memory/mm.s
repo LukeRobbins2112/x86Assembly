@@ -47,7 +47,7 @@ mm_init:
 
 	# set up first word as alignment padding
 	movq heap_listp, %rdi
-	movq $WSIZE, %rsi
+	movq $0, %rsi
 	callq PUT
 
 	# compute packed value for prologue header/footer
