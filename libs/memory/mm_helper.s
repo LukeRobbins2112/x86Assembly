@@ -222,7 +222,6 @@ NEXT_BLKP:
 	# (bp + size) = (next_bp + 4 extra bytes for footer)
 	# then subtract those 4 extra bytes to get start of next_bp
 	addq %rdi, %rax
-	subq $WSIZE, %rax
 
 	# return next block pointer
 	ret
