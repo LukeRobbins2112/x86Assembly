@@ -171,12 +171,22 @@ sbrk_err:
 	# ARGUMENTS
 	# Arg0 (%rdi): Num words requested
 	#
+	# STACK SPACE
+	# (RSP - 4): request size in bytes
+	# (RSP - 8): packed size/allocation
+	# 
+	#
 	# RETURN
 	# Returns pointer to newly allocated free block
 	#
 
 	.type extend_heap @function
 extend_heap:
+
+	# stack setup
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $12, %rsp
 
 	# get number of words, check if even or odd
 	movq %rdi, %rsi
@@ -190,7 +200,7 @@ extend_heap:
 even_words:
 	# convert words to bytes
 	imulq $WSIZE, %rdi
-	pushq %rdi		# save the size
+	movl %edi, -4(%rbp)	# save the size
 
 	# num bytes are already in arg0, call mem_sbrk for memory
 	callq mem_sbrk
@@ -199,20 +209,80 @@ even_words:
 	cmpq $-1, %rax
 	je extend_heap_err
 
-	#
-	# initialize free block header/footer
-	#
+	# save the block pointer
+	movl %eax, -8(%rbp)
+
+initialize_headerfooter:	
 
 	# get packed size/allocation
-	popq %rdi
+	movl -4(%rbp), %edi
 	movq $FREE, %rsi
 	callq PACK
-	pushq %rax
+	movl %eax, -12(%rbp)	# save packed value
 
+	# get the block header, put value there
+	movl -8(%rbp), %edi
+	callq HDRP
+
+	movq %rax, %rdi
+	movl -12(%rbp), %esi
+	callq PUT
+
+	# get the block footer, put value there
+	movl -8(%rbp), %edi
+	callq FTRP
+
+	movq %rax, %rdi
+	movl -12(%rbp), %esi
+	callq PUT
+
+set_new_epilogue:
+	# get header of "next" block
+	movl -8(%rbp), %edi
+	callq NEXT_BLKP
+
+	movq %rax, %rdi
+	callq HDRP
+	pushq %rax	# save pointer
+
+	movq $0, %rdi
+	movq $ALLOCATED, %rsi
+	callq PACK
+
+	# put the value
+	popq %rsi
+	movq %rax, %rsi
+	callq PUT
 	
-	
+coalesce_new_block:	
+	# coalesce
+	movl -8(%rbp), %edi
+	callq coalesce
+
+	# result is in %rax, just return
+	retq
 
 extend_heap_err:
 	movq $0, %rax
 	retq
 	
+
+
+
+	# @FUNCTION coalesce
+	#
+	# PURPOSE
+	# Given a block pointer, combine it with any adjacent free blocks
+	# Can coalesce up, down, both, or none
+	#
+	# ARGUMENTS
+	# Arg0 (%rdi): block pointer to free block
+	#
+	# RETURN
+	# Returns pointer to coalesced block
+	#
+
+	.type coalesce @function
+coalesce:
+	movq %rdi, %rax
+	retq
