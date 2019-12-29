@@ -193,10 +193,11 @@ no_chunk_found:
 	# extendSize = MAX(adjustedSize, CHUNKSIZE)
 	# grab extra memory (full page at a time)
 	# this way we're doing as few system calls as possible
+	xorq %rdx, %rdx
 	movq -8(%rbp), %rax
-	movq $CHUNKSIZE, %rdx
-	cmpq %rax, %rdx
-	cmovg %rdx, %rax
+	movq $CHUNKSIZE, %rsi
+	cmpq %rax, %rsi
+	cmovg %rsi, %rax
 	movq $WSIZE, %rdi
 	divq %rdi
 	movq %rax, %rdi
@@ -252,7 +253,7 @@ mem_sbrk:
 	cmpq $0, %rdi
 	jle sbrk_err
 	cmpq $MAX_MEM_REQUEST, %rdi
-	jge sbrk_err
+	jg sbrk_err
 
 	# save old program break
 	pushq mem_brk
