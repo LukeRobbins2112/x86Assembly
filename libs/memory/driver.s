@@ -46,6 +46,11 @@ _start:
 	movq $16, %rdi
 	callq find_fit
 
+	# test place
+	movq %rax, %rdi
+	movq $16, %rsi
+	callq place
+
 	# test mem_sbrk
 	movq $256, %rdi
 	callq mem_sbrk
