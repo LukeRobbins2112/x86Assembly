@@ -382,3 +382,142 @@ find_fit_done:
 	movq %rbp, %rsp
 	popq %rbp
 	ret
+
+	# @FUNCTION place
+	#
+	# PURPOSE
+	# Once an appropriate chunk of memory is found,
+	# this function sets it up for use
+	# This may involve splitting the block, depending
+	# on its size
+	# In either case, it sets the header/footer metadata
+	#
+	# ARGUMENTS
+	# Arg0 (%rdi): The block pointer itself
+	# Arg1 (%rsi): THe size of the requested memory
+	#
+	# STACK
+	# -8(%rbp): block pointer arg
+	# -16(%rbp): size arg
+	# -24(%rbp): old block size
+	#
+	# RETURN
+	# No return value
+	#
+
+	.type place @function
+place:
+	# stack setup
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $24, %rsp
+
+	# save block pointer and size args
+	movq %rdi, -8(%rbp)
+	movq %rsi, -16(%rbp)
+	
+	# get size of existing free block
+	# block pointer is already in %rdi
+	# save old size on the stack
+	callq HDRP
+	movq %rax, %rdi
+	callq GET_SIZE
+	movq %rax, -24(%rbp)
+
+	# check to see if we're splitting the block
+	# size + (2*DSIZE) -- aka will remainder be minimum block size
+	addq $DSIZE, %rsi
+	addq $DSIZE, %rsi
+
+	cmpq %rsi, -24(%rbp)
+	jl place_no_split
+
+	# Split the block, save the rest
+place_split:
+
+	# set up packed val
+	movq -16(%rbp), %rdi
+	movq $ALLOCATED, %rdi
+	callq PACK
+	movq %rax, %rbx
+
+	### Set up requested block chunk ###
+
+	# get bp header
+	movq -8(%rbp), %rdi
+	callq HDRP
+
+	# mark as allocated
+	movq %rax, %rdi
+	movq %rbx, %rsi
+	callq PUT
+
+	# get bp footer
+	movq -8(%rbp), %rdi
+	callq FTRP
+
+	# mark as allocated
+	movq %rax, %rdi
+	movq %rbx, %rsi
+	callq PUT
+
+	### Now set up the remainder ###
+
+	# get packed size for remainder
+	# (prevSize - size) | 0x0
+	movq -24(%rbp), %rdi
+	subq -16(%rbp), %rdi
+	movq $FREE, %rsi
+	callq PACK
+	movq %rax, %rbx
+
+	# get NEXT_BLKP of allocated chunk
+	movq -8(%rbp), %rdi
+	callq NEXT_BLKP
+	movq %rax, %r8
+
+	# PUT free block header
+	movq %rax, %rdi
+	callq HDRP
+	movq %rax, %rdi
+	movq %rbx, %rsi
+	callq PUT
+
+	# PUT free block footer
+	movq %r8, %rdi
+	callq FTRP
+	movq %rax, %rdi
+	movq %rbx, %rsi
+	callq PUT
+
+	jmp place_end
+
+place_no_split:
+	# get packed val
+	movq -24(%rbp), %rdi
+	movq $ALLOCATED, %rsi
+	callq PACK
+	movq %rax, %rbx
+
+	# get bp header
+	movq -8(%rbp), %rdi
+	callq HDRP
+
+	# mark as allocated
+	movq %rax, %rdi
+	movq %rbx, %rsi
+	callq PUT
+
+	# get bp footer
+	movq -8(%rbp), %rdi
+	callq FTRP
+
+	# mark as allocated
+	movq %rax, %rdi
+	movq %rbx, %rsi
+	callq PUT
+	
+place_end:
+	movq %rbp, %rsp
+	popq %rbp
+	retq
