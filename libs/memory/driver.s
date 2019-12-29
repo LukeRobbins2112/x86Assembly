@@ -42,6 +42,10 @@ _start:
 	movq $7, %rdi
 	callq extend_heap
 
+	# test find_fit
+	movq $16, %rdi
+	callq find_fit
+
 	# test mem_sbrk
 	movq $256, %rdi
 	callq mem_sbrk
