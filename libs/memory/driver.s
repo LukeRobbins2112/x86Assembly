@@ -52,7 +52,7 @@ _start:
 	#callq place
 
 	# test malloc
-	movq $16, %rdi
+	movq $64, %rdi
 	callq mm_alloc
 	
 	# test mem_sbrk
