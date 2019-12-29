@@ -306,3 +306,79 @@ extend_heap_err:
 coalesce:
 	movq %rdi, %rax
 	retq
+
+
+	# @FUNCTION find_fit
+	#
+	# PURPOSE
+	# Look for a block in which the given size will fit
+	#
+	# ARGUMENTS
+	# Arg0 (%rdi): Given size for which we need a block
+	#
+	# STACK
+	# (%rbp - 8): Save the size given as arg
+	# (%rbp - 16): fitPtr
+	# (%rbp - 24): HDRP(fitPtr)
+	#
+	# RETURN
+	# Returns block pointer to proper block on success
+	# Returns NULL on failure
+	#
+
+	.type find_fit @function
+find_fit:
+	# stack setup
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $24, %rsp
+
+	# save arg
+	movq %rdi, -8(%rbp)
+
+	# copy heap_listp to fitPtr
+	movq heap_listp, %rsi
+	movq %rsi, -16(%rbp)
+
+find_fit_loop:
+	# get fitPtr header
+	movq -16(%rbp), %rdi
+	callq HDRP
+	movq %rax, -24(%rbp)
+
+	# get block size
+	movq %rax, %rdi
+	callq GET_SIZE
+
+	# check loop condition
+	cmpq $0, %rax
+	je find_fit_done
+
+	# check if size is big enough
+	cmpq -8(%rbp), %rax
+	jl find_fit_next
+
+	# check if block is allocated
+	movq -24(%rbp), %rdi
+	callq GET_ALLOC
+
+	cmpq $FREE, %rax
+	jne find_fit_next
+
+	# if both passed, we found it
+	movq -16(%rbp), %rax
+	jmp find_fit_done
+
+find_fit_next:
+	movq -16(%rbp), %rdi
+	callq NEXT_BLKP
+	movq %rax, -16(%rbp)
+	jmp find_fit_loop
+
+fit_not_found:
+	movq $0, %rax
+	
+find_fit_done:
+	movq %rbp, %rsp
+	popq %rbp
+	ret
