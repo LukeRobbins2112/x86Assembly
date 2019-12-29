@@ -22,6 +22,11 @@ heap_listp:
 .section .text
 #############################		
 
+
+#########################################################################
+# MAIN API
+#########################################################################
+	
 	# @FUNCTION mm_init
 	#
 	# PURPOSE
@@ -109,6 +114,119 @@ mm_init:
 mm_init_err:
 	movq $-1, %rax
 	retq
+
+
+	# @FUNCTION mm_alloc
+	#
+	# PURPOSE
+	# API call for requesting dyamically-allocated memory
+	# Looks for an existing allocated block to satisfy request,
+	# and if it can't find one it moves the program break
+	#
+	# ARGUMENTS
+	# Arg0 (%rdi): Size of the chunk of memory requested
+	#
+	# STACK
+	# -8(%rbp): Adjusted size
+	#
+	# RETURN
+	# Returns a pointer to the chunk of memory requested
+	#
+	# NOTES
+	# Automatically adjusts requested size to include overhead from
+	# size and alignment
+	#
+
+	.type mm_alloc @function
+mm_alloc:	
+
+	# set up stack
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $8, %rsp
+	
+	# Make sure requested size is valid
+	cmpq $0, %rdi
+	jle malloc_fail
+
+	# if less than a DWORD, allocate the minimum
+	cmpq $DSIZE, %rdi
+	jle min_alloc
+
+	# otherwise, properly bias and add room for header/footer
+	# for division, divisor goes in idivq argument,
+	xorq %rdx, %rdx
+	movq %rdi, %rax
+	addq $DSIZE, %rax
+	addq $DSIZE, %rax
+	subq $1, %rax
+	movq $DSIZE, %rdi
+	divq %rdi
+	movq %rax, %rdi
+	imulq $DSIZE, %rdi
+	movq %rdi, -8(%rbp)
+	jmp allocate_chunk
+
+min_alloc:
+	# (2*DSIZE) is the minimum allocation
+	movq $DSIZE, -8(%rbp)
+	addq $DSIZE, -8(%rbp)
+
+allocate_chunk:	
+	# search for a pre-allocated block that suits our size needs
+	# adjusted size is already in %rdi
+	callq find_fit
+
+	# if we found one, place it and return -- otherwise extend heap
+	cmpq $0, %rax
+	je no_chunk_found
+
+	# setup the block we found and return it
+	pushq %rax
+	movq %rax, %rdi
+	movq -8(%rbp), %rsi
+	callq place
+	popq %rax
+	jmp mm_alloc_end
+
+no_chunk_found:
+	# extendSize = MAX(adjustedSize, CHUNKSIZE)
+	# grab extra memory (full page at a time)
+	# this way we're doing as few system calls as possible
+	movq -8(%rbp), %rax
+	movq $CHUNKSIZE, %rdx
+	cmpq %rax, %rdx
+	cmovg %rdx, %rax
+	movq $WSIZE, %rdi
+	divq %rdi
+	movq %rax, %rdi
+	callq extend_heap
+
+	# check result
+	cmpq $0, %rax
+	je malloc_fail
+
+	# on success, return new chunk
+	pushq %rax
+	movq %rax, %rdi
+	movq -8(%rbp), %rsi
+	callq place
+	popq %rax
+	jmp mm_alloc_end
+	
+malloc_fail:
+	movq $0, %rax
+
+mm_alloc_end:
+	movq %rbp, %rsp
+	popq %rbp
+	retq
+
+
+#########################################################################
+# HELPER FUNCTIONS
+#########################################################################	
+	
 
 	# @FUNCTION mem_sbrk()
 	#
