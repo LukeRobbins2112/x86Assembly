@@ -47,10 +47,14 @@ _start:
 	callq find_fit
 
 	# test place
-	movq %rax, %rdi
-	movq $16, %rsi
-	callq place
+	#movq %rax, %rdi
+	#movq $16, %rsi
+	#callq place
 
+	# test malloc
+	movq $16, %rdi
+	callq mm_alloc
+	
 	# test mem_sbrk
 	movq $256, %rdi
 	callq mem_sbrk
