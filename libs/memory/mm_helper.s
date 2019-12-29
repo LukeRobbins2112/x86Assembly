@@ -65,7 +65,7 @@ PACK:
 
 	.type GET @function
 GET:
-	movq (%rdi), %rax
+	movl (%rdi), %eax
 	ret
 
 	#
