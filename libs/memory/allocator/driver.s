@@ -33,7 +33,7 @@ INT_VAL:
 
 	.globl _start
 _start:
-	jmp basic_tests
+	callq basic_tests
 
 	# initialize heap
 	callq mm_init
@@ -140,6 +140,11 @@ basic_tests:
 	movq $NEXT_BLOCK, %rdi
 	addq $4, %rdi
 	callq PREV_BLKP
+
+	# test coalesce
+	movq $TEST_BLOCK, %rdi
+	addq $4, %rdi
+	callq coalesce
 
 	# done, return
 	retq
