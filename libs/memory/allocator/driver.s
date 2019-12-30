@@ -83,6 +83,8 @@ _start:
 	#
 	# RETURN
 	# No return
+	#
+	
 	.type basic_tests @function
 basic_tests:	
 	# test MAX
