@@ -33,7 +33,7 @@ INT_VAL:
 
 	.globl _start
 _start:
-	# jmp basic_tests
+	jmp basic_tests
 
 	# initialize heap
 	callq mm_init
@@ -65,6 +65,17 @@ _start:
 	syscall
 
 
+	# @FUNCTION
+	#
+	# Purpose
+	# Run basic tests on helper functions
+	#
+	# ARGUMENTS
+	# None
+	#
+	# RETURN
+	# No return
+	.type basic_tests @function
 basic_tests:	
 	# test MAX
 	movq $3, %rdi
@@ -124,6 +135,14 @@ basic_tests:
 	movq $TEST_BLOCK, %rdi
 	addq $4, %rdi
 	callq NEXT_BLKP
+
+	# test PREV_BLKP
+	movq $NEXT_BLOCK, %rdi
+	addq $4, %rdi
+	callq PREV_BLKP
+
+	# done, return
+	retq
 
 	
 
