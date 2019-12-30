@@ -39,7 +39,7 @@ _start:
 	callq mm_init
 
 	# test extend_heap
-	movq $7, %rdi
+	movq $12, %rdi
 	callq extend_heap
 
 	# test find_fit
@@ -52,7 +52,15 @@ _start:
 	#callq place
 
 	# test malloc
-	movq $64, %rdi
+	movq $16, %rdi
+	callq mm_alloc
+
+	# test free
+	# free existing block then allocate same size,
+	# see if it grabs same block
+	movq %rax, %rdi
+	callq mm_free
+	movq $8, %rdi
 	callq mm_alloc
 	
 	# test mem_sbrk
