@@ -225,4 +225,38 @@ NEXT_BLKP:
 
 	# return next block pointer
 	ret
+
+
+	# @FUNCTION
+	#
+	# PURPOSE
+	# Get pointer to the beginning of previous block pointer
+	#
+	# ARGUMENTS
+	# ARG0 (%rdi): Current block pointer
+	#
+	# RETURN
+	# Previous block pointer
+	#
+
+	.type PREV_BLKP @function
+PREV_BLKP:
+	# save bp
+	pushq %rdi
 	
+	# get pointer to prev block's footer
+	subq $DSIZE, %rdi
+
+	# get size of prev block, using footer
+	callq GET_SIZE
+
+	# retrieve bp
+	popq %rdi
+
+	# combine pointer and size to get prev (bp - size)
+	subq %rax, %rdi
+	movq %rdi, %rax
+
+	# return prev block pointer
+	ret
+
