@@ -224,6 +224,65 @@ mm_alloc_end:
 	retq
 
 
+	# @FUNCTION mm_free
+	#
+	# PURPOSE
+	# Implementation of free() - given a pointer, mark
+	# it as de-allocated and fair game for new allocations
+	#
+	# ARGUMENTS
+	# Arg0 (%rdi): pointer to the block to be freed
+	#
+	# STACK
+	# (%rbp - 8): bp
+	# (%rbp - 16): size of block
+	#
+	# RETURN
+	# No return value
+	#
+
+	.type mm_free @function
+mm_free:
+	# setup stack
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $16, %rsp
+
+	# save bp
+	movq %rdi, -8(%rbp)
+	
+	# get size of chunk
+	# pointer already in %rdi
+	callq HDRP
+	movq %rax, %rdi
+	callq GET_SIZE
+	movq %rax, -16(%rbp)
+
+	# Mark header as unallocated
+	# no need to PACK, since it's being marked as free
+	movq -8(%rbp), %rdi
+	callq HDRP
+	movq %rax, %rdi
+	movq -16(%rbp), %rsi
+	callq PUT
+
+	# Mark footer as unallocated
+	movq -8(%rbp), %rdi
+	callq FTRP
+	movq %rax, %rdi
+	movq -16(%rbp), %rsi
+	callq PUT
+
+	# coalesce
+	movq -8(%rbp), %rdi
+	callq coalesce
+
+	# done, return
+	movq %rbp, %rsp
+	popq %rbp
+	retq
+	
+
 #########################################################################
 # HELPER FUNCTIONS
 #########################################################################	
@@ -677,7 +736,7 @@ place_split:
 
 	# set up packed val
 	movq -16(%rbp), %rdi
-	movq $ALLOCATED, %rdi
+	movq $ALLOCATED, %rsi
 	callq PACK
 	movq %rax, %rbx
 
