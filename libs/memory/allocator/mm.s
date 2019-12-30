@@ -1,6 +1,6 @@
 
 	.include "mm_helper.s"
-	.include "../../includes/linux.s"
+	.include "/home/lukerobbins2112/src/x86Assembly/includes/linux.s"
 
 #############################	
 .section .data
@@ -417,15 +417,136 @@ extend_heap_err:
 	# ARGUMENTS
 	# Arg0 (%rdi): block pointer to free block
 	#
+	# STACK
+	# 
+	# (%rbp - 8): bp
+	# (%rbp - 16): prevAlloc
+	# (%rbp - 24): nextAlloc
+	# (%rbp - 32): size
+	#
 	# RETURN
 	# Returns pointer to coalesced block
+	#
+	# TODO
+	# Using 16 bytes for prev/next alloc flags, could just use bit flags
 	#
 
 	.type coalesce @function
 coalesce:
-	movq %rdi, %rax
-	retq
+	# setup stack
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $32, %rsp
 
+	# save bp
+	movq %rdi, -8(%rbp)
+
+	# save size
+	# bp is in %rdi
+	callq HDRP
+	movq %rax, %rdi
+	callq GET_SIZE
+	movq %rax, -32(%rbp)
+
+prevalloc_nextalloc:	
+	# get prevAlloc
+	# GET_ALLOC(FTRP(PREV_BLK(bp)))
+	movq -8(%rbp), %rdi
+	callq PREV_BLKP
+	movq %rax, %rdi
+	callq FTRP
+	movq %rax, %rdi
+	callq GET_ALLOC
+	movq %rax, -16(%rbp)
+
+	# get nextAlloc
+	movq -8(%rbp), %rdi
+	callq NEXT_BLKP
+	movq %rax, %rdi
+	callq HDRP
+	movq %rax, %rdi
+	callq GET_ALLOC
+	movq %rax, -24(%rbp)
+
+coalesce_next:
+	# test if this is necessary
+	cmpq $1, -24(%rbp)
+	je coalesce_prev
+
+	# get size of next block, add it to size
+	movq -8(%rbp), %rdi
+	callq NEXT_BLKP
+	movq %rax, %rdi
+	callq HDRP
+	movq %rax, %rdi
+	callq GET_SIZE
+
+	# add to size
+	addq %rax, -32(%rbp)
+
+	# if coalesce prev, don't set header/footer yet
+	cmpq $0, -16(%rbp)
+	je coalesce_prev
+
+next_headerfooter:	
+	# set header (no need to PACK - it's free)
+	movq -8(%rbp), %rdi
+	callq HDRP
+	movq %rax, %rdi
+	movq -32(%rbp), %rsi
+	callq PUT
+
+	# set footer (no need to PACK - it's free)
+	movq -8(%rbp), %rdi
+	callq FTRP
+	movq %rax, %rdi
+	movq -32(%rbp), %rsi
+	callq PUT
+
+	# if we're here, prev is allocated, we're done
+	jmp coalesce_done
+	
+coalesce_prev:
+	# test if this is necessary
+	cmpq $1, -16(%rbp)
+	je coalesce_done
+
+	# get new bp (previous block pointer) and update stack var
+	movq -8(%rbp), %rdi
+	callq PREV_BLKP
+	movq %rax, -8(%rbp)
+
+	# get size of previous block
+	movq %rax, %rdi
+	callq FTRP
+	movq %rax, %rdi
+	callq GET_SIZE
+
+	# add to size
+	addq %rax, -32(%rbp)
+
+prev_headerfooter:	
+	# update header of coalesced block with new size
+	movq -8(%rbp), %rdi
+	callq HDRP
+	movq %rax, %rdi
+	movq -32(%rbp), %rsi
+	callq PUT
+
+	# update footer of coalesced block, which depends on updated header
+	movq -8(%rbp), %rdi
+	callq FTRP
+	movq %rax, %rdi
+	movq -32(%rbp), %rsi
+	callq PUT
+	
+coalesce_done:
+	# return bp (either original or updated to prev bp)
+	movq -8(%rbp), %rax
+	movq %rbp, %rsp
+	popq %rbp
+	retq
+	
 
 	# @FUNCTION find_fit
 	#
