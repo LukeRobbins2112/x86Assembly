@@ -1,16 +1,5 @@
 
-
-#############################
-.section .data	# constants
-#############################
-
-
-.equ WSIZE, 4
-.equ DSIZE, 8
-.equ CHUNKSIZE, (1 << 12)	# 4096 bytes
-
-	.equ ALLOCATED, 1
-	.equ FREE, 0
+.include "mm_constants.s"
 	
 #########################	
 .section .text
@@ -20,6 +9,7 @@
 	# @FUNCTION MAX
 	#
 
+	.global MAX
 	.type MAX @function
 MAX:
 	cmpq %rdi, %rsi
@@ -44,6 +34,7 @@ MAX_SECOND:
 	# RETURN
 	# Packed combination of size and alloc bit
 
+	.global PACK
 	.type PACK @function
 PACK:
 	movl %edi, %eax
@@ -63,6 +54,7 @@ PACK:
 	# The value at that address
 	#
 
+	.global GET
 	.type GET @function
 GET:
 	movl (%rdi), %eax
@@ -81,8 +73,9 @@ GET:
 	# RETURN
 	# No return value
 	# @TODO might be nice to get original value at that addr?
-	#
+ 	#
 
+	.global PUT
 	.type PUT @function
 PUT:
 	movl %esi, (%rdi)
@@ -100,6 +93,7 @@ PUT:
 	# RETURN
 	# Returns block size
 
+	.global GET_SIZE
 	.type GET_SIZE @function
 GET_SIZE:
 	# ptr is already in %rdi, just call GET
@@ -124,6 +118,7 @@ GET_SIZE:
 	# Returns result of low bit check
 	#
 
+	.global GET_ALLOC
 	.type GET_ALLOC @function
 GET_ALLOC:	
 	# ptr is already in %rdi, just call GET
@@ -148,6 +143,7 @@ GET_ALLOC:
 	# Return pointer to the block header
 	#
 
+	.global HDRP
 	.type HDRP @function
 HDRP:
 	movq %rdi, %rax
@@ -166,6 +162,7 @@ HDRP:
 	# Return pointer to the block footer
 	#
 
+	.global FTRP
 	.type FTRP @function
 FTRP:
 	# save original block pointer
@@ -203,6 +200,7 @@ FTRP:
 	# Next block pointer
 	#
 
+	.global NEXT_BLKP
 	.type NEXT_BLKP @function
 NEXT_BLKP:
 	# save bp
@@ -239,6 +237,7 @@ NEXT_BLKP:
 	# Previous block pointer
 	#
 
+	.global PREV_BLKP
 	.type PREV_BLKP @function
 PREV_BLKP:
 	# save bp
