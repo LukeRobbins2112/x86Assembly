@@ -14,8 +14,16 @@ static char * mm_init_test(){
 
 static char * first_malloc(){
 
-  void * ptr = mm_alloc(4);
+  void * ptr = mm_alloc(8);
   mu_assert("Initial mm_alloc failed\n", ptr != 0);
+
+  void * header = HDRP(ptr);
+  mu_assert("HDRP is 4 bytes before ptr\n", (long)ptr - (long)header == 4);
+
+  // Requested 8 bytes, + header (4) + footer (4) = 16
+  long blockSize = GET_SIZE(header);
+  mu_assert("Size corresponds to request\n", blockSize == 16);
+  
   return 0;
 }
 
