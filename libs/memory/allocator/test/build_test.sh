@@ -8,10 +8,3 @@ gcc -c test.c -o test.o
 
 # compile executable with object files
 gcc test.o ../mm.o ../mm_helper.o -o test
-
-# run tests
-./test
-
-# cleanup
-rm test
-rm test.o

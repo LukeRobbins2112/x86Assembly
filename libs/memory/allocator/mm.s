@@ -38,6 +38,7 @@ heap_listp:
 	# RETURN VALYE
 	# Returns 0 on success, -1 on failure
 
+	.global mm_init
 	.type mm_init @function
 mm_init:
 	# Get initial program break, save it in heap_listp
@@ -137,6 +138,7 @@ mm_init_err:
 	# size and alignment
 	#
 
+	.global mm_alloc
 	.type mm_alloc @function
 mm_alloc:	
 
@@ -241,6 +243,7 @@ mm_alloc_end:
 	# No return value
 	#
 
+	.global mm_free
 	.type mm_free @function
 mm_free:
 	# setup stack
@@ -306,6 +309,7 @@ mm_free:
 	# (2) We assume requested amount is aligned (done elsewhere)
 	#
 
+	.global mem_sbrk
 	.type mem_sbrk @function
 mem_sbrk:
 	# check if requested memory is valid amount
@@ -374,6 +378,7 @@ sbrk_err:
 	# Returns pointer to newly allocated free block
 	#
 
+	.global extend_heap
 	.type extend_heap @function
 extend_heap:
 
@@ -490,6 +495,7 @@ extend_heap_err:
 	# Using 16 bytes for prev/next alloc flags, could just use bit flags
 	#
 
+	.global coalesce
 	.type coalesce @function
 coalesce:
 	# setup stack
@@ -625,6 +631,7 @@ coalesce_done:
 	# Returns NULL on failure
 	#
 
+	.global find_fit
 	.type find_fit @function
 find_fit:
 	# stack setup
@@ -704,6 +711,7 @@ find_fit_done:
 	# No return value
 	#
 
+	.global place
 	.type place @function
 place:
 	# stack setup

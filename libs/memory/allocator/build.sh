@@ -13,4 +13,4 @@ as mm.s -o mm.o
 as driver.s -o driver.o
 
 # link
-ld driver.o mm_helper.o -o driver
+ld driver.o mm.o -o driver

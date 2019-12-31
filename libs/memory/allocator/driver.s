@@ -1,6 +1,5 @@
 
-#	.include "mm_helper.s"
-	.include "mm.s"
+	.include "mm_helper.s"
 	
 #############################	
 .section .data
